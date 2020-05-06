@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>raster tile</title>
+<meta charset="utf-8">
+<meta http-equiv="imagetoolbar" content="no"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="https://cdn.maptiler.com/ol/v5.3.0/ol.css" type="text/css">
+<script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL,fetch,Function.prototype.bind,es5&flags=always,gated&unknown=polyfill" type="text/javascript"></script>
+<script src="https://cdn.maptiler.com/ol/v5.3.0/ol.js" type="text/javascript"></script>
+
+<style type="text/css">
+html, body { margin:0; padding: 0; height: 100%; width: 100%; }
+body { width:100%; height:100%; background: #F8F8F1; }
+#map { position: absolute; height: 100%; width: 100%; background-color: #F8F8F1; }
+
+  div.ol-attribution {
+    display: none;
+  }
+
+  div.ol-rotate.ol-hidden {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  div.instructions {
+    position: absolute;
+    bottom: 10px;
+    left: 120px;
+    background-image: url(nav-icons/instructions.svg);
+  }
+
+  div.reset {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background-image: url(nav-icons/reset-regular.svg);
+  }
+  div.reset:hover {
+    background-image: url(nav-icons/reset-hover.svg);
+  }
+
+  div.ol-zoom {
+    top: auto;
+    bottom: 10px;
+    left: auto;
+    right: 10px;
+  }
+
+  button.ol-zoom-in,
+  button.ol-zoom-in:focus {
+    background-image: url(nav-icons/zoom-in-regular.svg);
+  }
+  button.ol-zoom-in:hover {
+    background-image: url(nav-icons/zoom-in-hover.svg);
+  }
+
+  button.ol-zoom-out,
+  button.ol-zoom-out:focus {
+    background-image: url(nav-icons/zoom-out-regular.svg);
+  }
+  button.ol-zoom-out:hover {
+    background-image: url(nav-icons/zoom-out-hover.svg);
+  }
+
+  button.ol-rotate-reset,
+  button.ol-rotate-reset:focus {
+    background-image: url(nav-icons/arrow-box-regular.svg);
+  }
+  button.ol-rotate-reset:hover {
+    background-image: url(nav-icons/arrow-box-hover.svg);
+  }
+
+  span.ol-compass {
+    position: absolute;
+    top: 33px;
+    left: 33px;
+    width: 38px;
+    height: 38px;
+    background-image: url(nav-icons/arrow.svg);
+  }
+
+  span.ol-compass,
+  button.ol-rotate-reset,
+  button.ol-rotate-reset:hover,
+  button.ol-rotate-reset:focus,
+  div.ol-rotate.ol-hidden,
+  div.ol-rotate,
+  div.ol-rotate:hover,
+  button.ol-zoom-out,
+  button.ol-zoom-out:hover,
+  button.ol-zoom-out:focus,
+  button.ol-zoom-in,
+  button.ol-zoom-in:hover,
+  button.ol-zoom-in:focus,
+  div.ol-zoom,
+  div.ol-zoom:hover,
+  div.ol-zoom:focus,
+  div.instructions,
+  div.instructions:hover,
+  div.reset,
+  div.reset:hover {
+    outline: 0;
+    z-index: 100;
+    text-indent: 1000em;
+    background-color: rgba(0,0,0,0);
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: contain;
+  }
+
+  button.ol-rotate-reset,
+  button.ol-zoom-out,
+  button.ol-zoom-in,
+  div.instructions,
+  div.reset {
+    width: 100px;
+    height: 100px;
+  }
+
+  @media only screen and (max-width: 1000px) {
+    button.ol-rotate-reset,
+    button.ol-zoom-out,
+    button.ol-zoom-in,
+    div.instructions,
+    div.reset {
+      width: 60px;
+      height: 60px;
+    }
+
+    span.ol-compass {
+      top: 21px;
+      left: 21px;
+      width: 23px;
+      height: 23px;
+    }
+
+    div.instructions {
+      display: none;
+    }
+  }
+
+</style>
+
+</head>
+<body>
+
+<div id="map"></div>
+<div class="instructions"></div>
+<div class="reset" onclick="resetMap()"></div>
+
+<script type="text/javascript">
+var mapExtent = [0.00000000, -16384.00000000, 16384.00000000, 0.00000000];
+var mapMinZoom = 0;
+var mapMaxZoom = 7;
+var mapMaxResolution = 0.5;
+var tileExtent = [0.00000000, -16384.00000000, 16384.00000000, 0.00000000];
+
+var mapResolutions = [];
+for (var z = 0; z <= mapMaxZoom; z++) {
+  mapResolutions.push(Math.pow(2, mapMaxZoom - z) * mapMaxResolution);
+}
+
+var mapTileGrid = new ol.tilegrid.TileGrid({
+  extent: tileExtent,
+  minZoom: mapMinZoom,
+  resolutions: mapResolutions
+});
+
+var layer = new ol.layer.Tile({
+  source: new ol.source.XYZ({
+  attributions: 'sanjeetahira@gmail.com',
+    projection: 'PIXELS',
+    tileGrid: mapTileGrid,
+    tilePixelRatio: 2.00000000,
+    url: "{z}/{x}/{-y}.png",
+  })
+});
+
+// this creates a new event that is just shift+drag
+// it will be used a bit further down for the new DragRotate interaction
+ol.events.condition.customDragRotate = function(mapBrowserEvent) {
+  var browserEvent = mapBrowserEvent.originalEvent;
+  return (browserEvent.shiftKey);
+};
+
+
+var map = new ol.Map({
+  target: 'map',
+  // adds new DragRotate interaction to the map
+  interactions: ol.interaction.defaults().extend([
+    new ol.interaction.DragRotate({ condition: ol.events.condition.customDragRotate })
+  ]),
+  layers: [
+    layer,
+  ],
+  view: new ol.View({
+    projection: ol.proj.get('PIXELS'),
+    extent: mapExtent,
+    maxResolution: mapTileGrid.getResolution(mapMinZoom)
+  })
+});
+
+// this removes the default shift+drag zoom
+map.getInteractions().getArray().forEach(function(interaction) {
+  if (interaction instanceof ol.interaction.DragZoom) {
+    map.removeInteraction(interaction);
+  }
+});
+
+function resetMap() {
+  map.getView().fit(mapExtent, map.getSize());
+  map.getView().setZoom(1.5);
+  map.getView().setRotation(0);
+}
+
+resetMap();
+
+</script>
+</body>
+</html>
