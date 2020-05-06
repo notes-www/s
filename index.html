@@ -208,7 +208,7 @@ map.getInteractions().getArray().forEach(function(interaction) {
     map.removeInteraction(interaction);
   }
 });
-
+// reset + landing position of image
 function resetMap() {
   map.getView().fit(mapExtent, map.getSize());
   map.getView().setZoom(1.45);
